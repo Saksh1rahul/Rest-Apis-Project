@@ -1,5 +1,6 @@
 import os
 import secrets
+from urllib.parse import quote
 from flask import Flask,jsonify
 from flask_smorest import Api 
 from flask_jwt_extended import JWTManager
@@ -26,9 +27,18 @@ def create_app(db_url=None):
    app.config["OPENAPI_URL_PREFIX"]="/"
    app.config["OPENAPI_SWAGGER_UI_PATH"]="/swagger-ui"
    app.config["OPENAPI_SWAGGER_UI_URL"]="https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-   #if not db_url:
-    #  db_url=os.getenv("DATABASE_URL","sqlite:///data.db")
-   app.config["SQLALCHEMY_DATABASE_URI"]=db_url or os.getenv("DATABASE_URL","sqlite:///data.db")
+   
+   # Get database credentials from environment or use defaults
+   db_user = os.getenv("DB_USER", "sakshi")
+   db_pass = os.getenv("DB_PASS", "TOmysql@25")
+   db_host = os.getenv("DB_HOST", "localhost")
+   db_name = os.getenv("DB_NAME", "rest_api_db")
+   
+   # Properly encode special characters in password
+   encoded_pass = quote(db_pass, safe='')
+   db_connection = f"mysql+pymysql://{db_user}:{encoded_pass}@{db_host}/{db_name}"
+   
+   app.config["SQLALCHEMY_DATABASE_URI"] = db_url or db_connection
    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
    db.init_app(app)
    migrate = Migrate(app,db)
